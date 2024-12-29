@@ -1,39 +1,43 @@
 const express = require('express');
+const multer = require('multer');
 const Assignment = require('../models/Assignment');
+const authenticateToken = require('../helpers/auth');
+
 const router = express.Router();
-const authMiddleware = require('../helpers/auth'); // Create this middleware for token verification
+
+// File Upload Configuration
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, 'uploads/'),
+  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname),
+});
+const upload = multer({ storage });
 
 // Upload Assignment
-router.post('/', authMiddleware, async (req, res) => {
-  const { title, file } = req.body; // Assume file is uploaded and its path is sent
-  const assignment = new Assignment({ userId: req.user.id, title, file });
-  await assignment.save();
-  res.status(201).send('Assignment uploaded');
+router.post('/upload', authenticateToken, upload.single('file'), async (req, res) => {
+  const { title } = req.body;
+  const filePath = req.file.path;
+
+  try {
+    const assignment = new Assignment({
+      userId: req.user.id,
+      title,
+      filePath,
+    });
+    await assignment.save();
+    res.status(201).json({ message: 'Assignment Uploaded' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error Uploading Assignment', error });
+  }
 });
 
-    // Get User Assignments
-router.get('/', authMiddleware, async (req, res) => {
+// Get User's Assignments
+router.get('/', authenticateToken, async (req, res) => {
+  try {
     const assignments = await Assignment.find({ userId: req.user.id });
-    res.json(assignments);
-  });
-
-  // Search Assignments
-router.get('/search', authMiddleware, async (req, res) => {
-  const { query } = req.query;
-  const assignments = await Assignment.find({
-    title: { $regex: query, $options: 'i' },
-    userId: req.user.id,
-  });
-  res.json(assignments);
+    res.status(200).json(assignments);
+  } catch (error) {
+    res.status(500).json({ message: 'Error Fetching Assignments', error });
+  }
 });
-  
-  // Admin: Get All Assignments
-  router.get('/all', authMiddleware, async (req, res) => {
-    if (req.user.role !== 'admin') {
-      return res.status(403).send('Access denied');
-    }
-    const assignments = await Assignment.find().populate('userId', 'username');
-    res.json(assignments);
-  });
-  
-  module.exports = router;
+
+module.exports = router;
