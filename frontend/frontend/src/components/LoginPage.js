@@ -11,11 +11,13 @@ const LoginPage = () => {
     try {
       const response = await axios.post('/api/users/login', { email, password });
       localStorage.setItem('token', response.data.token);  // Save token in localStorage
+      
       window.location.href = '/dashboard';  // Redirect to dashboard
     } catch (error) {
       setErrorMessage('Invalid credentials');
     }
   };
+  
 
   return (
     <div>

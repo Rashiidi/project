@@ -2,8 +2,6 @@ import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import LoginPage from './components/LoginPage';
-// import UploadAssignment from './components/UploadAssignment';
-// import ViewAssignments from './components/ViewAssignments';
 import RegisterPage from './components/RegisterPage';
 import DashboardPage from './components/DashboardPage';
 
